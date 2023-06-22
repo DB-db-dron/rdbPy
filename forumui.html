@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Forum - Ask questions and get answers immediately</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 20px auto;
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        ul {
+            margin-bottom: 10px;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        .questionform {
+            margin-bottom: 20px;
+        }
+
+        .questionform h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .questionform__flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .questionform__flex textarea {
+            padding: 15px;
+            border: 1px solid #444;
+            outline: none;
+            font-size: 14px;
+            background: #444;
+            color: #fff;
+            flex-grow: 1;
+            height: 69px;
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+            display: block;
+        }
+
+        .questionform__flex button {
+            padding: 15px;
+            background-color: #0077cc;
+            color: #fff;
+            border: none;
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            height: 100px;
+        }
+
+        .questionform__flex button:hover {
+            background-color: #005299;
+        }
+
+        #answerlist {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        #answerlist li {
+            margin-bottom: 10px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+            background-color: #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #answerlist li:hover {
+            background-color: #222;
+            cursor: pointer;
+        }
+
+        #answerlist li a {
+            display: block;
+            padding: 16px;
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        #answerlist li a:hover {
+            color: #99c3e0;
+        }
+
+        #answerlist li .question {
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        #answerlist li .metadata {
+            font-size: 12px;
+            color: #ccc;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Question Forum:</h1>
+        <br>
+        <b>Rules and regulations:</b>
+        <ul>
+            <li>
+                No slang words
+            </li>
+            <li>
+                No harassing others
+            </li>
+            <li>
+                Refresh to update
+            </li>
+        </ul>
+        <br>
+        <div class="questionform">
+            <h4>Ask your question:</h2>
+                <div class="questionform__flex">
+                    <textarea name="questiontext" id="questiontext" placeholder="Type..."></textarea>
+                    <button id="askqs">Ask</button>
+                </div>
+        </div>
+        <br>
+        <h4>All Questions</h4>
+        <ul id="answerlist">
+        </ul>
+    </div>
+    <script>
+        // const pass = prompt("Code:")
+        const pass = "1234"
+        if (pass != "1234") {
+            document.body.innerHTML = "hello world"
+        } else {
+            // check visibility
+            var isUserActive = true;
+            if (typeof document.hidden !== "undefined") {
+                var visibilityChange = "visibilitychange";
+                if (typeof document.msHidden !== "undefined") {
+                    visibilityChange = "msvisibilitychange";
+                } else if (typeof document.webkitHidden !== "undefined") {
+                    visibilityChange = "webkitvisibilitychange";
+                }
+                document.addEventListener(visibilityChange, function () {
+                    if (document.hidden) {
+                        isUserActive = false;
+                        console.log("User Visited");
+                    } else {
+                        // User is actively interacting with the website
+                        isUserActive = true;
+                        console.log("User Left");
+                    }});}
+            const askqs = document.getElementById("askqs")
+            const questiontext = document.getElementById("questiontext")
+            const answerlist = document.getElementById("answerlist")
+            const fetchQuestions = async () => {
+                if (isUserActive) {
+                    answerlist.innerHTML = ""
+                    let res = await fetch("http://localhost:4000/fetchqs", {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json",}
+                    })
+                    let data = await res.json();
+                    allquestions = data.questions
+                    console.log(allquestions)
+                    for (let i = 0; i < allquestions.length; i++) {
+                        answerlist.innerHTML += `
+                <li><a href="/question?id=${allquestions[i].id}">${String(allquestions[i].question)}</a></li>
+                `}}}
+            fetchQuestions()
+            setInterval(fetchQuestions, 30000)
+            askqs.addEventListener("click", () => {
+                if (questiontext.value != "") {
+                    fetch("http://localhost:4000/askqs", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ question: questiontext.value })
+                    }).then(() => {
+                        questiontext.value = ""
+                        fetchQuestions()
+                    }).catch(() => {
+                        alert("something went wrong try again later...")
+                        console.log("something went wrong try again later...")
+                    })}})
+        }
+    </script>
+</body>
+
+</html>
